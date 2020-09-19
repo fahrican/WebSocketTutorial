@@ -35,6 +35,10 @@ class MainActivity : AppCompatActivity() {
         val coinbaseUri: URI? = URI(WEB_SOCKET_URL)
 
         createWebSocketClient(coinbaseUri)
+
+        val socketFactory: SSLSocketFactory = SSLSocketFactory.getDefault() as SSLSocketFactory
+        webSocketClient.setSocketFactory(socketFactory)
+        webSocketClient.connect()
     }
 
     private fun createWebSocketClient(coinbaseUri: URI?) {
@@ -56,7 +60,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onError(ex: Exception?) {
-                Log.e("createWebSocketClient", "onError: ${ex?.message}")
+                Log.e(TAG, "onError: ${ex?.message}")
             }
 
         }
@@ -67,6 +71,27 @@ class MainActivity : AppCompatActivity() {
             "{\n" +
                     "    \"type\": \"subscribe\",\n" +
                     "    \"channels\": [{ \"name\": \"ticker\", \"product_ids\": [\"BTC-EUR\"] }]\n" +
+                    "}"
+        )
+    }
+
+    private fun setUpBtcPriceText(message: String?) {
+        message?.let {
+            val jsonObject = JSONObject(message)
+            try {
+                val price = jsonObject.getString("price")
+                runOnUiThread { btc_price_tv.text = "1 BTC: $price €" }
+            } catch (je: JSONException) {
+                Log.e(TAG, "JSONException: ${je.message}")
+            }
+        }
+    }
+
+    private fun unsubscribe() {
+        webSocketClient.send(
+            "{\n" +
+                    "    \"type\": \"unsubscribe\",\n" +
+                    "    \"channels\": [\"ticker\"]\n" +
                     "}"
         )
     }
