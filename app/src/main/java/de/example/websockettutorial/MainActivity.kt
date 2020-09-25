@@ -3,11 +3,11 @@ package de.example.websockettutorial
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import com.squareup.moshi.JsonAdapter
+import com.squareup.moshi.Moshi
 import kotlinx.android.synthetic.main.activity_main.*
 import org.java_websocket.client.WebSocketClient
 import org.java_websocket.handshake.ServerHandshake
-import org.json.JSONException
-import org.json.JSONObject
 import java.lang.Exception
 import java.net.URI
 import javax.net.ssl.SSLSocketFactory
@@ -77,13 +77,10 @@ class MainActivity : AppCompatActivity() {
 
     private fun setUpBtcPriceText(message: String?) {
         message?.let {
-            val jsonObject = JSONObject(message)
-            try {
-                val price = jsonObject.getString("price")
-                runOnUiThread { btc_price_tv.text = "1 BTC: $price €" }
-            } catch (je: JSONException) {
-                Log.e(TAG, "JSONException: ${je.message}")
-            }
+            val moshi = Moshi.Builder().build()
+            val adapter: JsonAdapter<BitcoinTicker> = moshi.adapter(BitcoinTicker::class.java)
+            val bitcoin = adapter.fromJson(message)
+            runOnUiThread { btc_price_tv.text = "1 BTC: ${bitcoin?.price} €" }
         }
     }
 
